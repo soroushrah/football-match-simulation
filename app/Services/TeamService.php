@@ -66,11 +66,12 @@ class TeamService implements TeamServiceInterface
     {
         /** @var Team $team */
         $team = $this->show(id: $id, relations: ["tournaments"]);
-        if ($team->tournaments->count() > 0) {
+
+        /*if ($team->tournaments->count() > 0) {
             throw ValidationException::withMessages([
                 "team" => __("validation.exceptions.team.already_participated_in_tournament"),
             ]);
-        }
+        }*/
 
         return $force ? $team->forceDelete() : $team->delete();
     }

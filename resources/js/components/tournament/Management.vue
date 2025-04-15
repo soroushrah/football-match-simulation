@@ -253,8 +253,11 @@ const updateTeam = () => {
 };
 
 
+
+
 const confirmDeleteTeam = (index) => {
   const teamName = teams.value[index].name;
+  const teamID = teams.value[index].id;
 
   Swal.fire({
     title: 'Delete Team',
@@ -266,26 +269,12 @@ const confirmDeleteTeam = (index) => {
     confirmButtonText: 'Yes, delete it!'
   }).then((result) => {
     if (result.isConfirmed) {
-      teams.value.splice(index, 1);
-
-      Swal.fire(
-          'Deleted!',
-          `${teamName} has been removed.`,
-          'success'
-      );
-
-      // Clear fixtures if they exist
-      if (fixtures.value.length > 0) {
-        fixtures.value = [];
-
-        Swal.fire({
-          icon: 'info',
-          title: 'Fixtures Cleared',
-          text: 'Team changes have cleared the generated fixtures.',
-          timer: 2000,
-          showConfirmButton: false
-        });
-      }
+      axios.delete(`/api/teams/${teamID}`).then(({data}) => {
+        toast.success("Team Deleted Successfully !!1")
+        getTournament();
+      }).catch(({response}) => {
+        handelApiResponseError(response);
+      })
     }
   });
 };
@@ -299,88 +288,14 @@ const generateFixtures = () => {
   })
 };
 
-const generateRoundRobinFixtures = (teamNames) => {
-  const teams = [...teamNames];
-  const fixtures = [];
 
-  if (teams.length % 2 === 1) {
-    teams.push('BYE'); // Add a dummy team if odd number
-  }
-
-  const numberOfRounds = teams.length - 1;
-  const matchesPerRound = teams.length / 2;
-
-  for (let round = 0; round < numberOfRounds; round++) {
-    const roundMatches = [];
-
-    for (let match = 0; match < matchesPerRound; match++) {
-      const home = (round + match) % (teams.length - 1);
-      const away = (teams.length - 1 - match + round) % (teams.length - 1);
-
-      if (match === 0) {
-        roundMatches.push({
-          home: teams[teams.length - 1],
-          away: teams[away]
-        });
-      } else {
-        roundMatches.push({
-          home: teams[home],
-          away: teams[away]
-        });
-      }
-    }
-
-    fixtures.push({
-      round: round + 1,
-      matches: roundMatches.filter(match => match.home !== 'BYE' && match.away !== 'BYE')
-    });
-  }
-
-  return fixtures;
-};
-
-const exportFixtures = () => {
-  // Export as JSON
-  const fixturesJson = JSON.stringify(fixtures.value, null, 2);
-  const blob = new Blob([fixturesJson], {type: 'application/json'});
-  const url = URL.createObjectURL(blob);
-
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = 'tournament_fixtures.json';
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-
-  Swal.fire({
-    icon: 'success',
-    title: 'Export Successful',
-    text: 'Fixtures have been exported as JSON.',
-    timer: 1500,
-    showConfirmButton: false
-  });
-};
-
-const saveFixtures = () => {
-  // Simulate saving to server
-  Swal.fire({
-    title: 'Saving Fixtures',
-    html: 'Please wait while we save your fixtures...',
-    timer: 1500,
-    timerProgressBar: true,
-    didOpen: () => {
-      Swal.showLoading();
-    }
-  }).then(() => {
-    Swal.fire({
-      icon: 'success',
-      title: 'Fixtures Saved',
-      text: 'Your fixtures have been saved successfully!',
-      timer: 1500,
-      showConfirmButton: false
-    });
-  });
+const deleteTeam = () => {
+  axios.post(`/api/tournaments/generate-games/${tournamentId}`).then(({data}) => {
+    toast.success("Fixtures Generated !!")
+    window.location.href = `/fixtures/${tournamentId}`;
+  }).catch(({response}) => {
+    handelApiResponseError(response);
+  })
 };
 
 </script>
